@@ -151,6 +151,12 @@ public class Canvas {
                             }
                         });
                         polygonRasterizer.rasterize(polygon);
+                        if (e.getButton() == MouseEvent.BUTTON2) {
+                            Filler seedFiller = new SeedFiller(raster, e.getX(), e.getY(),
+                                    0x00ff00,
+                                    Color.black.getRGB());
+                            seedFiller.fill();
+                        }
                         panel.repaint();
                     }
                 }
