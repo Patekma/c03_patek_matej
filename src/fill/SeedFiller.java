@@ -21,13 +21,17 @@ public class SeedFiller implements Filler {
     }
 
     private void seedFill(int x, int y) {
+        // 1. načtu barvu z pixelu
         int pixelColor = raster.getPixel(x, y);
-
+        // Je barva pixelu stejná jako barva pozadí?
+        // Pokud ne -> končím
         if (pixelColor != backgroundColor)
             return;
 
+        // Pokud je -> pokračuju
+        // obarvím pixel barvou fillColor
         raster.setPixel(x, y, fillColor);
-
+        // rekurzivně zavolám metodu pro sousedy
         seedFill(x, y - 1);
         seedFill(x, y + 1);
         seedFill(x + 1, y);

@@ -26,4 +26,7 @@ public class Polygon {
         return points.size();
     }
 
+    public List<Point> getPoints() {
+        return points;
+    }
 }
