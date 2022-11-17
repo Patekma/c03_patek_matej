@@ -5,6 +5,7 @@ import model.Point;
 import model.Polygon;
 import rasterize.LineRasterizer;
 import rasterize.PolygonRasterizer;
+import transforms.Point2D;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,4 +71,9 @@ public class ScanFiller implements Filler {
         // Obkreslit polygon
 
     }
+
+//    public Point MaxMin(List<Edge> edges){
+//        Point maxMin;
+//        int max = edges.get(0).get
+//    }
 }
