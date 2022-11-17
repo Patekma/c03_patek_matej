@@ -1,6 +1,7 @@
 import fill.Filler;
 import fill.ScanFiller;
 import fill.SeedFiller;
+import model.Clip;
 import model.Point;
 import model.Polygon;
 import rasterize.*;
@@ -17,7 +18,7 @@ public class Canvas {
     private RasterBufferImage raster;
     private LineRasterizer lineRasterizer;
     private Polygon polygon;
-    private Polygon cropPolygon;
+    private Polygon clipPolygon;
     private PolygonRasterizer polygonRasterizer;
 
     private TriangleRasterizer triangleRasterizer;
@@ -27,11 +28,10 @@ public class Canvas {
     private int x2;
     private int y2;
 
-    //kontrola v jakem modu se program nachazi (T: rovnoramenny trojuhelnik, L: Linka, default: polygon)
+    //kontrola v jakem modu se program nachazi
     private boolean triangleMode = false;
     private boolean lineMode = false;
-
-    private boolean cropMode = false;
+    private boolean clipMode = false;
 
     public Canvas(int width, int height) {
         frame = new JFrame();
@@ -46,7 +46,7 @@ public class Canvas {
         polygonRasterizer = new PolygonRasterizer(lineRasterizer);
         triangleRasterizer = new TriangleRasterizer(lineRasterizer);
         polygon = new Polygon();
-        cropPolygon = new Polygon();
+        clipPolygon = new Polygon();
 
         panel = new JPanel() {
             @Override
@@ -127,7 +127,7 @@ public class Canvas {
                 if (lineMode) {
                     return;
                 }
-                if (cropMode) {
+                if (clipMode) {
                     return;
                 }
                 raster.clear();
@@ -145,7 +145,7 @@ public class Canvas {
                             if (lineMode) {
                                 return;
                             }
-                            if (cropMode) {
+                            if (clipMode) {
                                 return;
                             }
                             raster.clear();
@@ -160,8 +160,6 @@ public class Canvas {
                             }
                         }
                     });
-//                        Filler scanFiller = new ScanFiller(lineRasterizer, polygonRasterizer, polygon);
-//                        scanFiller.fill();
                     polygonRasterizer.rasterize(polygon);
                     if (e.getButton() == MouseEvent.BUTTON2) {
                         Filler seedFiller = new SeedFiller(raster, e.getX(), e.getY(),
@@ -183,7 +181,7 @@ public class Canvas {
                 //prepinani na vykreslovani linky pomoci klavesy L
                 if (e.getKeyCode() == KeyEvent.VK_L) {
                     triangleMode = false;
-                    cropMode = false;
+                    clipMode = false;
                     lineMode = !lineMode;
                     polygon.clearPoints();
                     raster.clear();
@@ -194,7 +192,7 @@ public class Canvas {
                 //trojuhelnik pomoci klavesy T
                 if (e.getKeyCode() == KeyEvent.VK_T) {
                     lineMode = false;
-                    cropMode = false;
+                    clipMode = false;
                     triangleMode = !triangleMode;
                     polygon.clearPoints();
                     raster.clear();
@@ -206,18 +204,27 @@ public class Canvas {
                 if (e.getKeyCode() == KeyEvent.VK_O) {
                     lineMode = false;
                     triangleMode = false;
-                    cropMode = !cropMode;
-                    cropPolygon.clearPoints();
+                    clipMode = !clipMode;
+                    clipPolygon.clearPoints();
                     raster.clear();
                     panel.repaint();
                     polygonRasterizer.rasterize(polygon);
-                    System.out.println("cropMode: " + cropMode);
+                    System.out.println("clipMode: " + clipMode);
                 }
 
                 //smazani platna pomoci klavesy C
                 if (e.getKeyCode() == KeyEvent.VK_C) {
                     polygon.clearPoints();
+                    clipPolygon.clearPoints();
                     raster.clear();
+                    panel.repaint();
+                }
+
+                if (e.getKeyCode() == KeyEvent.VK_I) {
+                    Clip clip = new Clip(polygon);
+                    Polygon clippedPolygon = new Polygon(clip.clipPolygon(clipPolygon));
+                    Filler scanFiller = new ScanFiller(lineRasterizer, polygonRasterizer, clippedPolygon);
+                    scanFiller.fill();
                     panel.repaint();
                 }
             }
@@ -240,48 +247,28 @@ public class Canvas {
             }
         });
 
-        //orezavaci polygon
+        //orezavaci trojuhelnik
         panel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
                 super.mouseReleased(e);
-                if (!cropMode) {
+                if (!clipMode) {
                     return;
                 }
                 raster.clear();
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    cropPolygon.addPoint(new Point(e.getX(), e.getY()));
+                    if (clipPolygon.getCount() >= 3) {
+                        return;
+                    }
+                    clipPolygon.addPoint(new Point(e.getX(), e.getY()));
                 }
-                if (cropPolygon.getCount() >= 2) {
-                    panel.addMouseMotionListener(new MouseAdapter() {
-                        @Override
-                        public void mouseDragged(MouseEvent e) {
-                            super.mouseDragged(e);
-                            if (!cropMode) {
-                                return;
-                            }
-                            raster.clear();
-                            polygonRasterizer.rasterize(polygon);
-                            for (int i = 0; i < cropPolygon.getCount() - 1; i++) {
-                                Line line1 = new Line(cropPolygon.getPoint(i).getX(), cropPolygon.getPoint(i).getY(), cropPolygon.getPoint(i + 1).getX(), cropPolygon.getPoint(i + 1).getY());
-                                lineRasterizer.rasterize(line1);
-                                Line line2 = new Line(cropPolygon.getPoint(cropPolygon.getCount() - 1).getX(), cropPolygon.getPoint(cropPolygon.getCount() - 1).getY(), e.getX(), e.getY());
-                                lineRasterizer.rasterize(line2);
-                                Line line3 = new Line(cropPolygon.getPoint(0).getX(), cropPolygon.getPoint(0).getY(), e.getX(), e.getY());
-                                lineRasterizer.rasterize(line3);
-                                panel.repaint();
-                            }
-                        }
-                    });
-                        Filler scanFiller = new ScanFiller(lineRasterizer, polygonRasterizer, cropPolygon);
-                        scanFiller.fill();
-                    polygonRasterizer.rasterize(cropPolygon);
+                if (clipPolygon.getCount() >= 2) {
+                    polygonRasterizer.rasterize(clipPolygon);
                     polygonRasterizer.rasterize(polygon);
                     panel.repaint();
                 }
             }
         });
-
     }
 
     public void start() {
