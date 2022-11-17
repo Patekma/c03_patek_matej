@@ -1,6 +1,7 @@
 package fill;
 
 import model.Edge;
+import model.Line;
 import model.Point;
 import model.Polygon;
 import rasterize.LineRasterizer;
@@ -8,6 +9,7 @@ import rasterize.PolygonRasterizer;
 import transforms.Point2D;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ScanFiller implements Filler {
@@ -36,44 +38,45 @@ public class ScanFiller implements Filler {
             Point p1 = polygon.getPoint(i);
             Point p2 = polygon.getPoint(nextIndex);
             Edge edge = new Edge(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-            // Pokud je horizontální, ignoruju
-            if (edge.isHorizontal())
-                continue;
-
-            // Přidám hranu do seznamu
-            edges.add(edge);
+            if (!edge.isHorizontal()) {
+                edge.orientate();
+                edges.add(edge);
+            }
+//            else {
+//                edges.add(edge);
+//            }
         }
 
         // Najít yMin, yMax
         int yMin = polygon.getPoint(0).getY();
         int yMax = yMin;
         for (Point p : polygon.getPoints()) {
-            // TODO: Najít yMin, yMax
+            if (yMin > p.getY()) {
+                yMin = p.getY();
+            }
+            if (yMax < p.getX()) {
+                yMax = p.getX();
+            }
         }
 
         // Pro Y od yMin po yMax
         for (int y = yMin; y <= yMax; y++) {
-            // Vytvořit seznam průsečíků: List<Integer>
-            List<Integer> prusecik = new ArrayList<>();
-            // Projdu všechny hrany
-            for (int i = 0; i < edges.size(); i++) {
-                // Zjistim, jestli existuje průsečík s hranou
 
-                // Pokud ano, spočítám a přidám do seznamu průsečíků
+            List<Integer> prusecik = new ArrayList<>();
+
+            for (Edge edge : edges) {
+                if (edge.isIntersection(y)) {
+                    prusecik.add(edge.getIntersection(y));
+                }
             }
 
-            // Seřadit průsečíky
-            // TODO: Setřídění průsečíků podle x, např. BubleSort
+            Collections.sort(prusecik);
 
-            // Vykreslit lines mezi lichými a sudými průsečíky
+            for (int i = 0; i < prusecik.size(); i++) {
+                lineRasterizer.rasterize(new Line(prusecik.get(i), y, prusecik.get(i+1), y));
+            }
         }
-
-        // Obkreslit polygon
 
     }
 
-//    public Point MaxMin(List<Edge> edges){
-//        Point maxMin;
-//        int max = edges.get(0).get
-//    }
 }
