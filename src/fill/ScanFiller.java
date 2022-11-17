@@ -53,12 +53,13 @@ public class ScanFiller implements Filler {
         // Pro Y od yMin po yMax
         for (int y = yMin; y <= yMax; y++) {
             // Vytvořit seznam průsečíků: List<Integer>
-
+            List<Integer> prusecik = new ArrayList<>();
             // Projdu všechny hrany
-            // {
+            for (int i = 0; i < edges.size(); i++) {
                 // Zjistim, jestli existuje průsečík s hranou
+
                 // Pokud ano, spočítám a přidám do seznamu průsečíků
-            // }
+            }
 
             // Seřadit průsečíky
             // TODO: Setřídění průsečíků podle x, např. BubleSort
