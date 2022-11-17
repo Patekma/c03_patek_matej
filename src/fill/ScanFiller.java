@@ -43,7 +43,6 @@ public class ScanFiller implements Filler {
                 edge.shorten();
                 edges.add(edge);
             }
-
         }
 
         // Najít yMin, yMax
@@ -53,12 +52,11 @@ public class ScanFiller implements Filler {
             if (yMin > p.getY()) {
                 yMin = p.getY();
             }
-            if (yMax < p.getX()) {
-                yMax = p.getX();
+            if (yMax < p.getY()) {
+                yMax = p.getY();
             }
         }
 
-        // Pro Y od yMin po yMax
         for (int y = yMin; y <= yMax; y++) {
 
             List<Integer> prusecik = new ArrayList<>();

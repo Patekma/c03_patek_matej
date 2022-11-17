@@ -17,6 +17,7 @@ public class Canvas {
     private RasterBufferImage raster;
     private LineRasterizer lineRasterizer;
     private Polygon polygon;
+    private Polygon cropPolygon;
     private PolygonRasterizer polygonRasterizer;
 
     private TriangleRasterizer triangleRasterizer;
@@ -29,6 +30,8 @@ public class Canvas {
     //kontrola v jakem modu se program nachazi (T: rovnoramenny trojuhelnik, L: Linka, default: polygon)
     private boolean triangleMode = false;
     private boolean lineMode = false;
+
+    private boolean cropMode = false;
 
     public Canvas(int width, int height) {
         frame = new JFrame();
@@ -43,6 +46,7 @@ public class Canvas {
         polygonRasterizer = new PolygonRasterizer(lineRasterizer);
         triangleRasterizer = new TriangleRasterizer(lineRasterizer);
         polygon = new Polygon();
+        cropPolygon = new Polygon();
 
         panel = new JPanel() {
             @Override
@@ -64,108 +68,111 @@ public class Canvas {
         //vykreslení linky pomoci 2 bodu
 
         //press: zadani 1. bodu
-            panel.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mousePressed(MouseEvent e) {
-                    if (!lineMode) {
-                        return;
-                    }
-                    if (e.getButton() == MouseEvent.BUTTON1) {
-                        super.mousePressed(e);
-                        raster.clear();
-                        x1 = e.getX();
-                        y1 = e.getY();
-                    }
+        panel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (!lineMode) {
+                    return;
                 }
-
-                //release: zadani 2. bodu
-                @Override
-                public void mouseReleased(MouseEvent e) {
-                    if (!lineMode) {
-                        return;
-                    }
-                    if (e.getButton() == MouseEvent.BUTTON1) {
-                        super.mouseReleased(e);
-                        raster.clear();
-                        x2 = e.getX();
-                        y2 = e.getY();
-                        Line line = new Line(x1, y1, x2, y2);
-                        lineRasterizer.rasterize(line);
-                        panel.repaint();
-                    }
-                }
-            });
-
-            //vykreslovani táhnutim myši
-            panel.addMouseMotionListener(new MouseAdapter() {
-                @Override
-                public void mouseDragged(MouseEvent e) {
-                    if (!lineMode) {
-                        return;
-                    }
-                    super.mouseDragged(e);
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    super.mousePressed(e);
                     raster.clear();
-                    Line line = new Line(x1, y1, e.getX(), e.getY());
+                    x1 = e.getX();
+                    y1 = e.getY();
+                }
+            }
+
+            //release: zadani 2. bodu
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (!lineMode) {
+                    return;
+                }
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    super.mouseReleased(e);
+                    raster.clear();
+                    x2 = e.getX();
+                    y2 = e.getY();
+                    Line line = new Line(x1, y1, x2, y2);
                     lineRasterizer.rasterize(line);
                     panel.repaint();
                 }
-            });
+            }
+        });
+
+        //vykreslovani táhnutim myši
+        panel.addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                if (!lineMode) {
+                    return;
+                }
+                super.mouseDragged(e);
+                raster.clear();
+                Line line = new Line(x1, y1, e.getX(), e.getY());
+                lineRasterizer.rasterize(line);
+                panel.repaint();
+            }
+        });
 
 
         //polygon
-        if (!triangleMode) {
-            panel.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseReleased(MouseEvent e) {
-                    super.mouseReleased(e);
-                    if (triangleMode) {
-                        return;
-                    }
-                    if (lineMode) {
-                        return;
-                    }
-                    raster.clear();
-                    if (e.getButton() == MouseEvent.BUTTON1) {
-                        polygon.addPoint(new Point(e.getX(), e.getY()));
-                    }
-                    if (polygon.getCount() >= 2) {
-                        panel.addMouseMotionListener(new MouseAdapter() {
-                            @Override
-                            public void mouseDragged(MouseEvent e) {
-                                super.mouseDragged(e);
-                                if (triangleMode) {
-                                    return;
-                                }
-                                if (lineMode) {
-                                    return;
-                                }
-                                raster.clear();
-                                for (int i = 0; i < polygon.getCount() - 1; i++) {
-                                    Line line1 = new Line(polygon.getPoint(i).getX(), polygon.getPoint(i).getY(), polygon.getPoint(i + 1).getX(), polygon.getPoint(i + 1).getY());
-                                    lineRasterizer.rasterize(line1);
-                                    Line line2 = new Line(polygon.getPoint(polygon.getCount() - 1).getX(), polygon.getPoint(polygon.getCount() - 1).getY(), e.getX(), e.getY());
-                                    lineRasterizer.rasterize(line2);
-                                    Line line3 = new Line(polygon.getPoint(0).getX(), polygon.getPoint(0).getY(), e.getX(), e.getY());
-                                    lineRasterizer.rasterize(line3);
-                                    panel.repaint();
-                                }
-                            }
-                        });
-                        polygonRasterizer.rasterize(polygon);
-                        if (e.getButton() == MouseEvent.BUTTON2) {
-//                            Filler seedFiller = new SeedFiller(raster, e.getX(), e.getY(),
-//                                    0xff0000,
-//                                    Color.black.getRGB());
-//                            seedFiller.fill();
-                            Filler scanFiller = new ScanFiller(lineRasterizer, polygonRasterizer, polygon);
-                            scanFiller.fill();
-                        }
-                        panel.repaint();
-                    }
+        panel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
+                if (triangleMode) {
+                    return;
                 }
-            });
-        }
-
+                if (lineMode) {
+                    return;
+                }
+                if (cropMode) {
+                    return;
+                }
+                raster.clear();
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    polygon.addPoint(new Point(e.getX(), e.getY()));
+                }
+                if (polygon.getCount() >= 2) {
+                    panel.addMouseMotionListener(new MouseAdapter() {
+                        @Override
+                        public void mouseDragged(MouseEvent e) {
+                            super.mouseDragged(e);
+                            if (triangleMode) {
+                                return;
+                            }
+                            if (lineMode) {
+                                return;
+                            }
+                            if (cropMode) {
+                                return;
+                            }
+                            raster.clear();
+                            for (int i = 0; i < polygon.getCount() - 1; i++) {
+                                Line line1 = new Line(polygon.getPoint(i).getX(), polygon.getPoint(i).getY(), polygon.getPoint(i + 1).getX(), polygon.getPoint(i + 1).getY());
+                                lineRasterizer.rasterize(line1);
+                                Line line2 = new Line(polygon.getPoint(polygon.getCount() - 1).getX(), polygon.getPoint(polygon.getCount() - 1).getY(), e.getX(), e.getY());
+                                lineRasterizer.rasterize(line2);
+                                Line line3 = new Line(polygon.getPoint(0).getX(), polygon.getPoint(0).getY(), e.getX(), e.getY());
+                                lineRasterizer.rasterize(line3);
+                                panel.repaint();
+                            }
+                        }
+                    });
+//                        Filler scanFiller = new ScanFiller(lineRasterizer, polygonRasterizer, polygon);
+//                        scanFiller.fill();
+                    polygonRasterizer.rasterize(polygon);
+                    if (e.getButton() == MouseEvent.BUTTON2) {
+                        Filler seedFiller = new SeedFiller(raster, e.getX(), e.getY(),
+                                0xff0000,
+                                Color.black.getRGB());
+                        seedFiller.fill();
+                    }
+                    panel.repaint();
+                }
+            }
+        });
 
         //funkce pomoci klaves
         panel.addKeyListener(new KeyAdapter() {
@@ -176,6 +183,7 @@ public class Canvas {
                 //prepinani na vykreslovani linky pomoci klavesy L
                 if (e.getKeyCode() == KeyEvent.VK_L) {
                     triangleMode = false;
+                    cropMode = false;
                     lineMode = !lineMode;
                     polygon.clearPoints();
                     raster.clear();
@@ -186,11 +194,24 @@ public class Canvas {
                 //trojuhelnik pomoci klavesy T
                 if (e.getKeyCode() == KeyEvent.VK_T) {
                     lineMode = false;
+                    cropMode = false;
                     triangleMode = !triangleMode;
                     polygon.clearPoints();
                     raster.clear();
                     panel.repaint();
                     System.out.println("triangleMode: " + triangleMode);
+                }
+
+                //orezavani pomoci klavesy O
+                if (e.getKeyCode() == KeyEvent.VK_O) {
+                    lineMode = false;
+                    triangleMode = false;
+                    cropMode = !cropMode;
+                    cropPolygon.clearPoints();
+                    raster.clear();
+                    panel.repaint();
+                    polygonRasterizer.rasterize(polygon);
+                    System.out.println("cropMode: " + cropMode);
                 }
 
                 //smazani platna pomoci klavesy C
@@ -216,6 +237,48 @@ public class Canvas {
                 }
                 triangleRasterizer.rasterize(polygon);
                 panel.repaint();
+            }
+        });
+
+        //orezavaci polygon
+        panel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
+                if (!cropMode) {
+                    return;
+                }
+                raster.clear();
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    cropPolygon.addPoint(new Point(e.getX(), e.getY()));
+                }
+                if (cropPolygon.getCount() >= 2) {
+                    panel.addMouseMotionListener(new MouseAdapter() {
+                        @Override
+                        public void mouseDragged(MouseEvent e) {
+                            super.mouseDragged(e);
+                            if (!cropMode) {
+                                return;
+                            }
+                            raster.clear();
+                            polygonRasterizer.rasterize(polygon);
+                            for (int i = 0; i < cropPolygon.getCount() - 1; i++) {
+                                Line line1 = new Line(cropPolygon.getPoint(i).getX(), cropPolygon.getPoint(i).getY(), cropPolygon.getPoint(i + 1).getX(), cropPolygon.getPoint(i + 1).getY());
+                                lineRasterizer.rasterize(line1);
+                                Line line2 = new Line(cropPolygon.getPoint(cropPolygon.getCount() - 1).getX(), cropPolygon.getPoint(cropPolygon.getCount() - 1).getY(), e.getX(), e.getY());
+                                lineRasterizer.rasterize(line2);
+                                Line line3 = new Line(cropPolygon.getPoint(0).getX(), cropPolygon.getPoint(0).getY(), e.getX(), e.getY());
+                                lineRasterizer.rasterize(line3);
+                                panel.repaint();
+                            }
+                        }
+                    });
+                        Filler scanFiller = new ScanFiller(lineRasterizer, polygonRasterizer, cropPolygon);
+                        scanFiller.fill();
+                    polygonRasterizer.rasterize(cropPolygon);
+                    polygonRasterizer.rasterize(polygon);
+                    panel.repaint();
+                }
             }
         });
 
