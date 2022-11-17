@@ -153,7 +153,7 @@ public class Canvas {
                         polygonRasterizer.rasterize(polygon);
                         if (e.getButton() == MouseEvent.BUTTON2) {
                             Filler seedFiller = new SeedFiller(raster, e.getX(), e.getY(),
-                                    0x00ff00,
+                                    0xff0000,
                                     Color.black.getRGB());
                             seedFiller.fill();
                         }
@@ -164,11 +164,13 @@ public class Canvas {
         }
 
 
-        //prepinani na vykreslovani linky pomoci klavesy L
+        //funkce pomoci klaves
         panel.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 super.keyPressed(e);
+
+                //prepinani na vykreslovani linky pomoci klavesy L
                 if (e.getKeyCode() == KeyEvent.VK_L) {
                     triangleMode = false;
                     lineMode = !lineMode;
@@ -177,16 +179,8 @@ public class Canvas {
                     panel.repaint();
                     System.out.println("lineMode: " + lineMode);
                 }
-            }
-        });
 
-        //trojuhelnik pomoci klavesy T
-
-        //prepinani modu pomoci klavesy T
-        panel.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                super.keyPressed(e);
+                //trojuhelnik pomoci klavesy T
                 if (e.getKeyCode() == KeyEvent.VK_T) {
                     lineMode = false;
                     triangleMode = !triangleMode;
@@ -194,6 +188,13 @@ public class Canvas {
                     raster.clear();
                     panel.repaint();
                     System.out.println("triangleMode: " + triangleMode);
+                }
+
+                //smazani platna pomoci klavesy C
+                if (e.getKeyCode() == KeyEvent.VK_C) {
+                    polygon.clearPoints();
+                    raster.clear();
+                    panel.repaint();
                 }
             }
         });
@@ -215,20 +216,6 @@ public class Canvas {
             }
         });
 
-
-        //smazani platna pomoci klavesy C
-
-        panel.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                super.keyPressed(e);
-                if (e.getKeyCode() == KeyEvent.VK_C) {
-                    polygon.clearPoints();
-                    raster.clear();
-                    panel.repaint();
-                }
-            }
-        });
     }
 
     public void start() {
