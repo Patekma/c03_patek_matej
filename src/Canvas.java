@@ -1,4 +1,5 @@
 import fill.Filler;
+import fill.ScanFiller;
 import fill.SeedFiller;
 import model.Point;
 import model.Polygon;
@@ -152,10 +153,12 @@ public class Canvas {
                         });
                         polygonRasterizer.rasterize(polygon);
                         if (e.getButton() == MouseEvent.BUTTON2) {
-                            Filler seedFiller = new SeedFiller(raster, e.getX(), e.getY(),
-                                    0xff0000,
-                                    Color.black.getRGB());
-                            seedFiller.fill();
+//                            Filler seedFiller = new SeedFiller(raster, e.getX(), e.getY(),
+//                                    0xff0000,
+//                                    Color.black.getRGB());
+//                            seedFiller.fill();
+                            Filler scanFiller = new ScanFiller(lineRasterizer, polygonRasterizer, polygon);
+                            scanFiller.fill();
                         }
                         panel.repaint();
                     }

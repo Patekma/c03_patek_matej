@@ -40,11 +40,10 @@ public class ScanFiller implements Filler {
             Edge edge = new Edge(p1.getX(), p1.getY(), p2.getX(), p2.getY());
             if (!edge.isHorizontal()) {
                 edge.orientate();
+                edge.shorten();
                 edges.add(edge);
             }
-//            else {
-//                edges.add(edge);
-//            }
+
         }
 
         // Najít yMin, yMax
@@ -72,11 +71,11 @@ public class ScanFiller implements Filler {
 
             Collections.sort(prusecik);
 
-            for (int i = 0; i < prusecik.size(); i++) {
+            for (int i = 0; i < prusecik.size()-1; i += 2) {
                 lineRasterizer.rasterize(new Line(prusecik.get(i), y, prusecik.get(i+1), y));
             }
         }
-
+        polygonRasterizer.rasterize(polygon);
     }
 
 }
